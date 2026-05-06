@@ -1,0 +1,67 @@
+query AttachmentById($id: ID) {
+  item(id: $id) {
+    id
+    name
+    category {
+      name
+    }
+    properties {
+      ... on ItemPropertiesScope {
+        ergonomics
+        recoilModifier
+        slots {
+          id
+          name
+          required
+          filters {
+            allowedItems {
+              id
+            }
+          }
+        }
+      }
+      ... on ItemPropertiesWeaponMod {
+        ergonomics
+        recoilModifier
+        slots {
+          id
+          name
+          required
+          filters {
+            allowedItems {
+              id
+            }
+          }
+        }
+      }
+      ... on ItemPropertiesMagazine {
+        ergonomics
+        recoilModifier
+        slots {
+          id
+          name
+          required
+          filters {
+            allowedItems {
+              id
+            }
+          }
+        }
+      }
+      ... on ItemPropertiesBarrel {
+        ergonomics
+        recoilModifier
+        slots {
+          id
+          name
+          required
+          filters {
+            allowedItems {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}

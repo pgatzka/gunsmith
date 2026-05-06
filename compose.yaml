@@ -1,0 +1,23 @@
+name: gunsmith_dev
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: gunsmith_dev
+      POSTGRES_PASSWORD: gunsmith_dev
+      POSTGRES_DB: gunsmith_dev
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:

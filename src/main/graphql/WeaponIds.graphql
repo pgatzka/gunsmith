@@ -1,0 +1,5 @@
+query WeaponIds {
+  items(type: gun) {
+    id
+  }
+}

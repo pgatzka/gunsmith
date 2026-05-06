@@ -1,0 +1,26 @@
+query WeaponById($id: ID) {
+  item(id: $id) {
+    id
+    name
+    category {
+      name
+    }
+    properties {
+      ... on ItemPropertiesWeapon {
+        ergonomics
+        recoilHorizontal
+        recoilVertical
+        slots {
+          id
+          name
+          required
+          filters {
+            allowedItems {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}

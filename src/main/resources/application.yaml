@@ -1,0 +1,47 @@
+spring:
+  main:
+    banner-mode: off
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        generate_statistics: true
+        default_batch_fetch_size: 100
+  batch:
+    job:
+      enabled: false
+  datasource:
+    hikari:
+      data-source-properties:
+        reWriteBatchedInserts: true
+  application:
+    name: gunsmith
+    version: @project.version@
+gunsmith:
+  job:
+    cron: ${GUNSMITH_JOB_CRON}
+    count: ${GUNSMITH_JOB_COUNT}
+logging:
+  level:
+    io.github.pgatzka.gunsmith.apollo.ApolloService: debug
+    org.hibernate.orm: warn
+    org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo: warn
+    # org.hibernate.orm.jdbc.bind: TRACE
+    # org.hibernate.stat: DEBUG
+    # org.hibernate.SQL: DEBUG
+
+server:
+  port: ${GUNSMITH_PORT:8080}
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - prometheus
