@@ -21,7 +21,6 @@ spring:
         reWriteBatchedInserts: true
   application:
     name: gunsmith
-    version: @project.version@
 gunsmith:
   job:
     cron: ${GUNSMITH_JOB_CRON}

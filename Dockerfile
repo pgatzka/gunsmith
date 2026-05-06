@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1.7
 
 # --- Build stage ---
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 
-# Copy Gradle wrapper and config first to leverage layer caching
+# Alpine ships with /bin/sh (ash), not bash — gradlew works fine with sh
 COPY gradlew ./
 COPY gradle gradle
 COPY build.gradle.kts settings.gradle.kts ./
@@ -21,11 +21,11 @@ COPY src src
 RUN ./gradlew bootJar --no-daemon -x test
 
 # --- Runtime stage ---
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Run as non-root
-RUN useradd --system --uid 1001 --create-home spring
+# Alpine uses adduser, not useradd
+RUN addgroup -S spring && adduser -S -G spring -u 1001 spring
 USER spring
 
 COPY --from=build /app/build/libs/*.jar app.jar

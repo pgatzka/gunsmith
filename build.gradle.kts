@@ -46,7 +46,12 @@ apollo {
 }
 
 tasks {
-    "generateServiceApolloSources"{
+    "generateServiceApolloSources" {
         dependsOn("downloadServiceApolloSchemaFromIntrospection")
+    }
+    bootJar {
+        manifest {
+            attributes("Implementation-Version" to project.version)
+        }
     }
 }
