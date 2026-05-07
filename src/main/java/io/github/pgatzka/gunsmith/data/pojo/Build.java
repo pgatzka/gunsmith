@@ -1,28 +1,12 @@
 package io.github.pgatzka.gunsmith.data.pojo;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-import java.util.Set;
+import java.util.List;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class Build {
 
-    private String id;
-
-    private String name;
-
-    private Double ergonomics;
-
-    private Integer recoilHorizontal;
-
-    private Integer recoilVertical;
-
-    private Set<Slot> slots;
+    private List<Slot> slots;
 
 }

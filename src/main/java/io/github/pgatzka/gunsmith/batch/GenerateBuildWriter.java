@@ -1,8 +1,8 @@
 package io.github.pgatzka.gunsmith.batch;
 
 import io.github.pgatzka.gunsmith.batch.pojo.BuildResult;
-import io.github.pgatzka.gunsmith.data.entity.BuildData;
-import io.github.pgatzka.gunsmith.data.repository.BuildDataRepository;
+import io.github.pgatzka.gunsmith.data.entity.BuildEntity;
+import io.github.pgatzka.gunsmith.data.repository.BuildRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -11,61 +11,46 @@ import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 @StepScope
 public class GenerateBuildWriter implements ItemWriter<BuildResult>, StepExecutionListener {
 
-    private final BuildDataRepository buildDataRepository;
+    private final ObjectMapper objectMapper;
 
-    private Set<Integer> existingJson;
+    private final BuildRepository buildRepository;
+
+    private final Set<Integer> jsonHashes = new HashSet<>();
 
     @Override
     public void beforeStep(@NonNull StepExecution stepExecution) {
-        existingJson = buildDataRepository.fetchExistingJsonHashes();
+        jsonHashes.addAll(buildRepository.getJsonHashes());
     }
 
     @Override
     public void write(@NonNull Chunk<? extends BuildResult> chunk) {
-        List<BuildResult> builds = chunk.getItems().stream().map(BuildResult.class::cast)
-                .filter(buildResult -> Collections.disjoint(buildResult.conflictingAttachments(), buildResult.usedAttachments())).toList();
+        List<BuildEntity> builds = chunk.getItems().stream()
+                .map(buildResult -> {
+                    BuildEntity buildEntity = new BuildEntity();
+                    buildEntity.setWeaponId(buildResult.weaponId());
+                    buildEntity.setErgonomics(buildResult.ergonomics());
+                    buildEntity.setRecoilHorizontal(buildResult.recoilHorizontal());
+                    buildEntity.setRecoilVertical(buildResult.recoilVertical());
+                    String json = objectMapper.writeValueAsString(buildResult.build());
+                    buildEntity.setJson(json);
+                    buildEntity.setJsonHash(json.hashCode());
+                    return buildEntity;
+                })
+                .filter(build -> jsonHashes.add(build.getJsonHash()))
+                .toList();
 
-        Set<BuildResult> json = builds.stream()
-                .filter(build -> !existingJson.contains(build.jsonHash()))
-                .collect(Collectors.toSet());
-
-        existingJson.addAll(builds.stream().map(BuildResult::jsonHash).collect(Collectors.toSet()));
-
-        List<BuildData> newBuildData = json.stream().map(buildResult -> {
-            BuildData buildData = new BuildData();
-            buildData.setJsonHash(buildResult.jsonHash());
-            buildData.setJson(buildResult.json());
-            buildData.setUsedAttachments(buildResult.usedAttachments());
-
-            double ergonomics = buildResult.baseErgonomics() + buildResult.ergonomicsModifiers().stream().mapToDouble(Double::doubleValue).sum();
-
-            double recoilMultiplier = buildResult.recoilModifiers().stream()
-                    .mapToDouble(mod -> 1 + mod)
-                    .reduce(1.0, (a, b) -> a * b);
-
-            double recoilHorizontal = buildResult.baseRecoilHorizontal() * recoilMultiplier;
-            double recoilVertical = buildResult.baseRecoilVertical() * recoilMultiplier;
-
-            buildData.setErgonomics(ergonomics);
-            buildData.setRecoilHorizontal(recoilHorizontal);
-            buildData.setRecoilVertical(recoilVertical);
-            buildData.setWeaponId(buildResult.weaponId());
-
-            return buildData;
-        }).toList();
-
-        buildDataRepository.saveAll(newBuildData);
+        buildRepository.saveAll(builds);
     }
 
 }

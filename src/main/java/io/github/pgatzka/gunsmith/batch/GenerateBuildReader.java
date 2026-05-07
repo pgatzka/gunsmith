@@ -1,5 +1,6 @@
 package io.github.pgatzka.gunsmith.batch;
 
+import io.github.pgatzka.gunsmith.ApplicationProperties;
 import io.github.pgatzka.gunsmith.apollo.ApolloService;
 import io.github.pgatzka.gunsmith.apollo.WeaponIdsQuery;
 import io.github.pgatzka.gunsmith.batch.pojo.BuildSettings;
@@ -23,6 +24,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @RequiredArgsConstructor
 public class GenerateBuildReader implements ItemReader<BuildSettings>, StepExecutionListener {
 
+    private final ApplicationProperties properties;
+
     private final ApolloService apolloService;
 
     private Iterator<BuildSettings> iterator;
@@ -31,7 +34,7 @@ public class GenerateBuildReader implements ItemReader<BuildSettings>, StepExecu
     public void beforeStep(@NonNull StepExecution stepExecution) {
         String id = stepExecution.getJobExecution().getJobParameters().getString("id", null);
         List<String> ids = id == null
-                ? apolloService.query(new WeaponIdsQuery()).items.stream().map(item -> item.id).toList()
+                ? apolloService.query(new WeaponIdsQuery()).items.stream().map(item -> item.id).filter(weaponId -> !properties.getIgnoredWeapons().contains(weaponId)).toList()
                 : List.of();
 
         if (id == null && ids.isEmpty()) {

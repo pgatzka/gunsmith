@@ -5,16 +5,17 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class AbstractEntity {
+public class AbstractEntity implements Persistable<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -23,10 +24,15 @@ public abstract class AbstractEntity {
 
     @CreatedDate
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
+
+    @Override
+    public boolean isNew() {
+        return id == null;
+    }
 
 }

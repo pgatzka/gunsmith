@@ -2,7 +2,7 @@ package io.github.pgatzka.gunsmith.data.service;
 
 import com.apollographql.apollo.api.Optional;
 import io.github.pgatzka.gunsmith.apollo.ApolloService;
-import io.github.pgatzka.gunsmith.apollo.WeaponByIdQuery;
+import io.github.pgatzka.gunsmith.apollo.WeaponsByIdQuery;
 import io.github.pgatzka.gunsmith.data.embeddable.SlotData;
 import io.github.pgatzka.gunsmith.data.entity.WeaponData;
 import io.github.pgatzka.gunsmith.data.enumeration.WeaponType;
@@ -26,11 +26,11 @@ public class WeaponDataService {
         if (weaponDataRepository.existsByTarkovId(tarkovId)) {
             return weaponDataRepository.findByTarkovId(tarkovId);
         }
-        WeaponByIdQuery.Data data = apolloService.query(new WeaponByIdQuery(Optional.present(tarkovId)));
-        return weaponDataRepository.save(transform(data.item));
+        WeaponsByIdQuery.Data data = apolloService.query(new WeaponsByIdQuery(List.of(tarkovId)));
+        return weaponDataRepository.save(transform(data.items.getFirst()));
     }
 
-    private WeaponData transform(WeaponByIdQuery.Item item) {
+    public WeaponData transform(WeaponsByIdQuery.Item item) {
         WeaponData weaponData = new WeaponData();
         weaponData.setTarkovId(item.id);
         weaponData.setName(item.name);
@@ -39,7 +39,7 @@ public class WeaponDataService {
         weaponData.setRecoilHorizontal(item.properties.onItemPropertiesWeapon.recoilHorizontal);
         weaponData.setRecoilVertical(item.properties.onItemPropertiesWeapon.recoilVertical);
 
-        List<SlotData> slots = item.properties.onItemPropertiesWeapon.slots.stream().map(slot -> {
+        List<SlotData> slots = item.properties.onItemPropertiesWeapon.slots.stream().filter(slot -> !slot.name.equals("Chamber")).map(slot -> {
             SlotData weaponSlotData = new SlotData();
             weaponSlotData.setTarkovId(slot.id);
             weaponSlotData.setName(slot.name);

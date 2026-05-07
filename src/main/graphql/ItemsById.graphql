@@ -1,11 +1,30 @@
-query AttachmentById($id: ID) {
-  item(id: $id) {
+query ItemsById($ids: [ID]!) {
+  items(ids: $ids) {
     id
     name
     category {
       name
     }
+    conflictingItems {
+      id
+      types
+    }
     properties {
+      ... on ItemPropertiesWeapon {
+        ergonomics
+        recoilHorizontal
+        recoilVertical
+        slots {
+          id
+          name
+          required
+          filters {
+            allowedItems {
+              id
+            }
+          }
+        }
+      }
       ... on ItemPropertiesScope {
         ergonomics
         recoilModifier

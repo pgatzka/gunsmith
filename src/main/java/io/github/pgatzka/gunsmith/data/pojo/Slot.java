@@ -1,20 +1,11 @@
 package io.github.pgatzka.gunsmith.data.pojo;
 
-import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class Slot {
 
-    private String id;
-
-    private String name;
+    private Long id;
 
     private Attachment attachment;
 
