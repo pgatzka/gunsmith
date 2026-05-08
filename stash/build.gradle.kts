@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("io.github.pgatzka.docker") version "1.0.0"
     id("io.freefair.lombok") version "9.5.0"
     id("org.springframework.boot") version "4.0.6"
     id("com.apollographql.apollo") version "4.4.3"

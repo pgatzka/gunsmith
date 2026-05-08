@@ -1,4 +1,3 @@
-
 spring:
   main:
     banner-mode: off
@@ -29,10 +28,6 @@ logging:
     io.github.pgatzka.gunsmith: info
     org.hibernate.orm: warn
     org.springframework.orm.jpa.persistenceunit.SpringPersistenceUnitInfo: warn
-    # org.hibernate.orm.jdbc.bind: TRACE
-    # org.hibernate.stat: DEBUG
-    # org.hibernate.SQL: DEBUG
-    # io.github.pgatzka.gunsmith.apollo.FileCacheHttpInterceptor: debug
 
 management:
   endpoints:
@@ -42,22 +37,3 @@ management:
           - health
           - info
           - prometheus
-gunsmith:
-  max-query-batch-size: 50
-  cache-time-to-live-minutes: 1440
-  apollo-max-attempts: 5
-  permits-per-minute: 60
-  apollo-initial-backoff-milliseconds: 1000
-  api-url: https://api.tarkov.dev/graphql
-  ignored-weapons:
-    - 62178c4d4ecf221597654e3d
-    - 624c0b3340357b5f566e8766
-    - 620109578d82e67e7911abf2
-    - 6217726288ed9f0845317459
-    - 62178be9d0050232da3485d9
-    - 66d98233302686954b0c6f81
-    - 66d9f1abb16d9aacf5068468
-    - 676bf44c5539167c3603e869
-    - 675ea3d6312c0a5c4e04e317
-  batch-size: 50000
-  interval: PT1M
