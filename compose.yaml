@@ -2,16 +2,16 @@ name: gunsmith_dev
 
 services:
   postgres:
-    container_name: postgres
+    container_name: gunsmith_dev-postgres
     image: postgres:18-alpine
     environment:
       POSTGRES_USER: gunsmith_dev
       POSTGRES_PASSWORD: gunsmith_dev
       POSTGRES_DB: gunsmith_dev
     ports:
-      - "5437:5432"
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - gunsmith_dev-postgres_data:/var/lib/postgresql
 
 volumes:
-  postgres_data:
+  gunsmith_dev-postgres_data:
