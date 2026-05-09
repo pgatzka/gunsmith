@@ -1,0 +1,61 @@
+fragment SlotFields on ItemSlot {
+    id
+    name
+    required
+    filters {
+        allowedItems {
+            id
+        }
+    }
+}
+
+query ItemsByIds($ids: [ID]!) {
+    items(ids: $ids) {
+        id
+        name
+        iconLink
+        category {
+            id
+            name
+        }
+        conflictingItems {
+            id
+            types
+        }
+        properties {
+            ... on ItemPropertiesBarrel {
+                ergonomics
+                recoilModifier
+                slots { ... SlotFields }
+            }
+            ... on ItemPropertiesWeaponMod {
+                ergonomics
+                recoilModifier
+                slots { ... SlotFields }
+            }
+            ... on ItemPropertiesMagazine {
+                ergonomics
+                recoilModifier
+                slots { ... SlotFields }
+            }
+            ... on ItemPropertiesScope {
+                ergonomics
+                recoilModifier
+                slots { ... SlotFields }
+            }
+            ... on ItemPropertiesWeapon {
+                ergonomics
+                recoilHorizontal
+                recoilVertical
+                slots { ... SlotFields }
+            }
+        }
+    }
+}
+
+query WeaponIds {
+    items(types: [gun]) {
+        id
+        name
+    }
+}

@@ -1,3 +1,4 @@
 /.gradle/
 /.idea/
+/apollo-cache/
 /build/
