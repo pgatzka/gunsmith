@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('THROUGHPUT', 60)}"></head>
+<body th:replace="~{fragments/layout :: body('THROUGHPUT', 'throughput', ~{::section})}">
+
+<section class="page__section">
+
+    <div class="section-head">
+        <div class="section-head__lead">
+            <span class="section-head__chap">§ 03</span>
+            <h1 class="section-head__title">THROUGHPUT</h1>
+        </div>
+        <div class="section-head__rule" aria-hidden="true"></div>
+        <p class="section-head__note">
+            Builds filed per minute over the last four hours. Empty intervals reported as zero.
+            Strip auto-pings every 60 seconds.
+        </p>
+    </div>
+
+    <dl class="readout readout--lg readout--strip">
+        <div class="readout__cell">
+            <dt>TOTAL · 4H</dt>
+            <dd th:text="${#numbers.formatInteger(report.total, 0, 'COMMA')}">0</dd>
+        </div>
+        <div class="readout__cell">
+            <dt>PEAK · MIN</dt>
+            <dd th:text="${#numbers.formatInteger(report.peak, 0, 'COMMA')}">0</dd>
+        </div>
+        <div class="readout__cell">
+            <dt>MEAN · MIN</dt>
+            <dd th:text="${#numbers.formatDecimal(report.mean, 1, 1)}">0.0</dd>
+        </div>
+        <div class="readout__cell">
+            <dt>LAST · MIN</dt>
+            <dd th:text="${#numbers.formatInteger(report.lastMinute, 0, 'COMMA')}">0</dd>
+        </div>
+    </dl>
+
+    <figure class="strip">
+        <div class="strip__corner strip__corner--tl" aria-hidden="true"></div>
+        <div class="strip__corner strip__corner--tr" aria-hidden="true"></div>
+        <div class="strip__corner strip__corner--bl" aria-hidden="true"></div>
+        <div class="strip__corner strip__corner--br" aria-hidden="true"></div>
+
+        <header class="strip__head">
+            <span class="strip__label">CHANNEL — BUILD/MIN</span>
+            <span class="strip__ping">
+                <span class="strip__ping-dot" aria-hidden="true"></span>
+                AUTO-PING 60s
+            </span>
+        </header>
+
+        <div class="strip__canvas-wrap">
+            <canvas id="throughputCanvas"></canvas>
+        </div>
+
+        <figcaption class="strip__foot">
+            <span>WINDOW</span>
+            <span class="strip__foot-val"
+                  th:text="${labels.size() > 0 ? labels[0] + ' → ' + labels[labels.size()-1] : '—'}">
+                00:00 → 00:00
+            </span>
+            <span class="strip__foot-rule" aria-hidden="true"></span>
+            <span>READ</span>
+            <span class="strip__foot-val"
+                  th:text="${#temporals.format(report.generatedAt, 'yyyy-MM-dd HH:mm:ss z')}">
+                READ
+            </span>
+        </figcaption>
+    </figure>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const labels = /*[[${labels}]]*/ [];
+        const counts = /*[[${counts}]]*/ [];
+
+        const css = getComputedStyle(document.documentElement);
+        const colorAmber = css.getPropertyValue('--c-amber').trim() || '#c8853a';
+        const colorGrid  = 'rgba(200, 133, 58, 0.08)';
+        const colorTick  = css.getPropertyValue('--c-text-dim').trim() || '#8b8770';
+        const fontMono   = "'JetBrains Mono', ui-monospace, monospace";
+
+        const canvas = document.getElementById('throughputCanvas');
+        if (canvas && window.Chart) {
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'builds/min',
+                        data: counts,
+                        borderColor: colorAmber,
+                        backgroundColor: 'rgba(200, 133, 58, 0.05)',
+                        borderWidth: 1.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 3,
+                        pointHoverBackgroundColor: colorAmber,
+                        pointHoverBorderColor: colorAmber,
+                        tension: 0,
+                        fill: true,
+                        spanGaps: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0b0c08',
+                            borderColor: '#424528',
+                            borderWidth: 1,
+                            titleColor: '#ece5c8',
+                            bodyColor: '#c9c4ac',
+                            titleFont: { family: fontMono, size: 11, weight: '600' },
+                            bodyFont:  { family: fontMono, size: 11 },
+                            padding: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: function (items) { return items[0].label; },
+                                label: function (item) { return item.parsed.y + ' builds'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: colorGrid, drawTicks: false, lineWidth: 1 },
+                            border: { color: '#2d2f23' },
+                            ticks: {
+                                color: colorTick,
+                                font: { family: fontMono, size: 10 },
+                                maxRotation: 0,
+                                autoSkip: true,
+                                autoSkipPadding: 24,
+                                maxTicksLimit: 12
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: colorGrid, drawTicks: false, lineWidth: 1 },
+                            border: { color: '#2d2f23' },
+                            ticks: {
+                                color: colorTick,
+                                font: { family: fontMono, size: 10 },
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        /*]]>*/
+    </script>
+
+</section>
+</body>
+</html>

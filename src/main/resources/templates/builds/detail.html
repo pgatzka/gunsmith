@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('BUILD DOSSIER', null)}"></head>
+<body th:replace="~{fragments/layout :: body('BUILD DOSSIER', 'weapons', ~{::section})}">
+
+<section class="page__section">
+
+    <div class="dossier-head">
+        <a class="weapon-hero__back" th:href="@{|/weapons/${detail.weapon.id}/builds|}">&larr; MANIFEST</a>
+        <div class="dossier-head__row">
+            <div class="dossier-head__title">
+                <span class="dossier-head__chap">DOSSIER</span>
+                <h1 class="dossier-head__id">BUILD-<span th:text="${detail.id}">000</span></h1>
+                <div class="dossier-head__filed"
+                     th:text="|FILED ${#temporals.format(detail.createdAt, 'yyyy-MM-dd HH:mm:ss z')}|">
+                    FILED 2026-05-09
+                </div>
+            </div>
+            <dl class="readout readout--lg">
+                <div class="readout__cell">
+                    <dt>ERG</dt>
+                    <dd th:text="${#numbers.formatDecimal(detail.ergonomics, 1, 1)}">0.0</dd>
+                </div>
+                <div class="readout__cell">
+                    <dt>RCL V</dt>
+                    <dd th:text="${#numbers.formatDecimal(detail.recoilVertical, 1, 1)}">0.0</dd>
+                </div>
+                <div class="readout__cell">
+                    <dt>RCL H</dt>
+                    <dd th:text="${#numbers.formatDecimal(detail.recoilHorizontal, 1, 1)}">0.0</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="dossier-body">
+
+        <aside class="dossier-weapon">
+            <header class="section-head section-head--sub">
+                <span class="section-head__chap">§ A</span>
+                <h2 class="section-head__title">PLATFORM</h2>
+                <div class="section-head__rule" aria-hidden="true"></div>
+            </header>
+            <div class="dossier-weapon__media">
+                <img th:src="${detail.weapon.iconLink}" th:alt="${detail.weapon.name}"/>
+            </div>
+            <div class="dossier-weapon__cat" th:text="${detail.weapon.category} ?: 'UNCLASSIFIED'">CATEGORY</div>
+            <div class="dossier-weapon__name" th:text="${detail.weapon.name}">Weapon</div>
+            <a class="link-arrow" th:href="@{|/weapons/${detail.weapon.id}/builds|}">All builds for this platform &rarr;</a>
+        </aside>
+
+        <div class="dossier-tree">
+            <header class="section-head section-head--sub">
+                <span class="section-head__chap">§ B</span>
+                <h2 class="section-head__title">ATTACHMENT TREE</h2>
+                <div class="section-head__rule" aria-hidden="true"></div>
+            </header>
+            <ol class="tree" th:if="${!#lists.isEmpty(detail.tree)}">
+                <li th:each="r : ${detail.tree}"
+                    class="tree__row"
+                    th:classappend="${'tree__row--d' + r.depth}"
+                    th:style="${'--d:' + (r.depth - 1)}">
+                    <span class="tree__rail" aria-hidden="true"></span>
+                    <span class="tree__slot">
+                        <span class="tree__dim">SLOT</span>
+                        <span class="tree__slot-name" th:text="${r.slotName} ?: '—'">slot</span>
+                    </span>
+                    <span class="tree__sep" aria-hidden="true">&#8211;&#8211;</span>
+                    <span class="tree__att" th:if="${r.attachmentName != null}">
+                        <img class="tree__icon"
+                             th:if="${r.attachmentIcon != null}"
+                             th:src="${r.attachmentIcon}"
+                             th:alt="${r.attachmentName}"
+                             loading="lazy"/>
+                        <span class="tree__att-name" th:text="${r.attachmentName}">attachment</span>
+                        <span class="tree__att-id">A-<span th:text="${r.attachmentId}">000</span></span>
+                    </span>
+                    <span class="tree__att tree__att--empty" th:if="${r.attachmentName == null}">empty</span>
+                </li>
+            </ol>
+            <div class="empty" th:if="${#lists.isEmpty(detail.tree)}">
+                <span class="empty__mark">— BUILD HAS NO RECORDED SLOTS —</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

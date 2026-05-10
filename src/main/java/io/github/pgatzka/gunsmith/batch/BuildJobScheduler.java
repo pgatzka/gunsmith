@@ -115,12 +115,6 @@ public class BuildJobScheduler implements SchedulingConfigurer {
         Duration elapsed = Duration.between(start, Instant.now());
         double buildPercent = (built * 100.0) / jobCountTarget;
         Duration nextDelay = computeDelay(built);
-
-        if (countAfter > limit) {
-            log.info("Stopping right here");
-            nextDelay = Duration.ofDays(1L);
-        }
-
         double delayPercent = computeDelayPercent(nextDelay);
 
         log.info("Built {} / {} ({}%) in {} | next job in {} | delay at {}%",

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('WEAPONS INDEX', null)}"></head>
+<body th:replace="~{fragments/layout :: body('WEAPONS INDEX', 'weapons', ~{::section})}">
+
+<section class="page__section">
+    <div class="section-head">
+        <div class="section-head__lead">
+            <span class="section-head__chap">§ 01</span>
+            <h1 class="section-head__title">WEAPONS INDEX</h1>
+        </div>
+        <div class="section-head__rule" aria-hidden="true"></div>
+        <p class="section-head__note">
+            Browse catalogued small arms. Select a unit to retrieve documented build configurations.
+        </p>
+    </div>
+
+    <ul class="grid">
+        <li class="grid__item" th:each="w : ${weapons}">
+            <a class="card" th:href="@{|/weapons/${w.id}/builds|}">
+                <div class="card__corner card__corner--tl" aria-hidden="true"></div>
+                <div class="card__corner card__corner--tr" aria-hidden="true"></div>
+                <div class="card__corner card__corner--bl" aria-hidden="true"></div>
+                <div class="card__corner card__corner--br" aria-hidden="true"></div>
+                <div class="card__media">
+                    <img th:src="${w.iconLink}" th:alt="${w.name}" loading="lazy"/>
+                </div>
+                <div class="card__body">
+                    <div class="card__cat" th:text="${w.category} ?: 'UNCLASSIFIED'">CATEGORY</div>
+                    <div class="card__name" th:text="${w.name}">Weapon Name</div>
+                    <div class="card__id">UNIT-<span th:text="${#strings.replace(#strings.toString(w.id), '-', '')}">000</span></div>
+                </div>
+            </a>
+        </li>
+    </ul>
+
+    <nav class="pager">
+        <a class="pager__btn"
+           th:if="${hasPrev}"
+           th:href="@{/weapons(page=${page - 1})}">&lt; PREV</a>
+        <span class="pager__btn pager__btn--ghost" th:unless="${hasPrev}">&lt; PREV</span>
+        <span class="pager__page">PAGE <span th:text="${page + 1}">1</span></span>
+        <a class="pager__btn"
+           th:if="${hasNext}"
+           th:href="@{/weapons(page=${page + 1})}">NEXT &gt;</a>
+        <span class="pager__btn pager__btn--ghost" th:unless="${hasNext}">NEXT &gt;</span>
+    </nav>
+</section>
+
+</body>
+</html>

@@ -61,15 +61,9 @@ public class WeaponService {
 
         List<String> idsToFetch = new ArrayList<>();
         uniqueIds.forEach(tarkovId -> {
-            if (dsl.fetchExists(WEAPON, WEAPON.TARKOV_ID.eq(tarkovId))
-                    && dsl.select(WEAPON.UPDATED_AT)
-                    .from(WEAPON)
-                    .where(WEAPON.TARKOV_ID.eq(tarkovId))
-                    .fetchSingleInto(OffsetDateTime.class)
-                    .isAfter(OffsetDateTime.now().minusDays(2))) {
+            if (dsl.fetchExists(WEAPON, WEAPON.TARKOV_ID.eq(tarkovId))) {
                 return;
             }
-            dsl.deleteFrom(WEAPON).where(WEAPON.TARKOV_ID.eq(tarkovId)).execute();
             idsToFetch.add(tarkovId);
         });
 

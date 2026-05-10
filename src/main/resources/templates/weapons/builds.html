@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${weapon.name}, null)}"></head>
+<body th:replace="~{fragments/layout :: body('BUILD MANIFEST', 'weapons', ~{::section})}">
+
+<section class="page__section">
+
+    <div class="weapon-hero">
+        <a class="weapon-hero__back" th:href="@{/weapons}">&larr; INDEX</a>
+        <div class="weapon-hero__media">
+            <img th:src="${weapon.iconLink}" th:alt="${weapon.name}"/>
+        </div>
+        <div class="weapon-hero__body">
+            <div class="weapon-hero__cat" th:text="${weapon.category} ?: 'UNCLASSIFIED'">CATEGORY</div>
+            <h1 class="weapon-hero__name" th:text="${weapon.name}">Weapon Name</h1>
+            <dl class="readout">
+                <div class="readout__cell">
+                    <dt>BASE ERG</dt>
+                    <dd th:text="${#numbers.formatDecimal(weapon.ergonomics, 1, 1)}">0.0</dd>
+                </div>
+                <div class="readout__cell">
+                    <dt>RECOIL V</dt>
+                    <dd th:text="${weapon.recoilVertical}">0</dd>
+                </div>
+                <div class="readout__cell">
+                    <dt>RECOIL H</dt>
+                    <dd th:text="${weapon.recoilHorizontal}">0</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="manifest">
+        <aside class="filter">
+            <form method="get" th:action="@{|/weapons/${weapon.id}/builds|}" class="filter__form" id="filterForm">
+                <header class="filter__head">
+                    <span class="filter__chap">§ 02.A</span>
+                    <h2 class="filter__title">FILTERS</h2>
+                </header>
+
+                <label class="filter__search">
+                    <span class="filter__label">QUERY</span>
+                    <input type="text" name="q" id="attachmentQuery"
+                           th:value="${query}"
+                           autocomplete="off"
+                           placeholder="search attachments…"/>
+                </label>
+
+                <div class="filter__legend">
+                    <span class="legend-tag legend-tag--inc">INC</span>
+                    <span class="legend-tag legend-tag--exc">EXC</span>
+                    <span class="filter__legend-text">two-state toggle per attachment</span>
+                </div>
+
+                <div class="filter__list" id="attachmentList">
+                    <div class="filter__row" th:each="a : ${attachmentOptions}"
+                         th:data-name="${#strings.toLowerCase(a.name)}">
+                        <span class="filter__row-name" th:text="${a.name}">Attachment</span>
+                        <span class="filter__toggles">
+                            <label class="toggle toggle--inc">
+                                <input type="checkbox" name="include" th:value="${a.id}"
+                                       th:checked="${includeSet.contains(a.id)}"
+                                       data-pair="inc"
+                                       th:data-attachment="${a.id}"/>
+                                <span>INC</span>
+                            </label>
+                            <label class="toggle toggle--exc">
+                                <input type="checkbox" name="exclude" th:value="${a.id}"
+                                       th:checked="${excludeSet.contains(a.id)}"
+                                       data-pair="exc"
+                                       th:data-attachment="${a.id}"/>
+                                <span>EXC</span>
+                            </label>
+                        </span>
+                    </div>
+                    <div class="filter__empty" th:if="${#lists.isEmpty(attachmentOptions)}">
+                        No attachments recorded for this weapon.
+                    </div>
+                </div>
+
+                <div class="filter__actions">
+                    <button class="btn btn--primary" type="submit">APPLY</button>
+                    <a class="btn btn--ghost" th:href="@{|/weapons/${weapon.id}/builds|}">RESET</a>
+                </div>
+            </form>
+        </aside>
+
+        <div class="builds">
+
+            <div class="pinned" th:if="${firstPage and !#lists.isEmpty(pinnedBuilds)}">
+                <header class="section-head section-head--sub">
+                    <span class="section-head__chap">§ 02.B</span>
+                    <h2 class="section-head__title">FLAGGED CONFIGURATIONS</h2>
+                    <div class="section-head__rule" aria-hidden="true"></div>
+                </header>
+                <div class="pinned__grid">
+                    <article class="pin-card" th:each="p : ${pinnedBuilds}">
+                        <div class="pin-card__stamp">
+                            <span class="pin-card__stamp-text" th:text="${p.label}">LABEL</span>
+                        </div>
+                        <div class="pin-card__id">BUILD-<span th:text="${p.summary.id}">000</span></div>
+                        <dl class="readout readout--lg">
+                            <div class="readout__cell">
+                                <dt>ERG</dt>
+                                <dd th:text="${#numbers.formatDecimal(p.summary.ergonomics, 1, 1)}">0.0</dd>
+                            </div>
+                            <div class="readout__cell">
+                                <dt>RCL V</dt>
+                                <dd th:text="${#numbers.formatDecimal(p.summary.recoilVertical, 1, 1)}">0.0</dd>
+                            </div>
+                            <div class="readout__cell">
+                                <dt>RCL H</dt>
+                                <dd th:text="${#numbers.formatDecimal(p.summary.recoilHorizontal, 1, 1)}">0.0</dd>
+                            </div>
+                        </dl>
+                        <a class="pin-card__cta" th:href="@{|/builds/${p.summary.id}|}">OPEN DOSSIER &rarr;</a>
+                    </article>
+                </div>
+            </div>
+
+            <header class="section-head section-head--sub">
+                <span class="section-head__chap">§ 02.C</span>
+                <h2 class="section-head__title">RECORDED BUILDS</h2>
+                <div class="section-head__rule" aria-hidden="true"></div>
+            </header>
+
+            <table class="ledger" th:if="${!#lists.isEmpty(builds)}">
+                <thead>
+                <tr>
+                    <th class="ledger__id">ID</th>
+                    <th class="ledger__ts">FILED</th>
+                    <th class="ledger__num">ERG</th>
+                    <th class="ledger__num">RCL V</th>
+                    <th class="ledger__num">RCL H</th>
+                    <th class="ledger__act"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${builds}">
+                    <td class="ledger__id">
+                        <span class="ledger__id-prefix">B-</span><span th:text="${b.id}">000</span>
+                    </td>
+                    <td class="ledger__ts" th:text="${#temporals.format(b.createdAt, 'yyyy-MM-dd HH:mm')}">
+                        2026-05-09 12:00
+                    </td>
+                    <td class="ledger__num" th:text="${#numbers.formatDecimal(b.ergonomics, 1, 1)}">0.0</td>
+                    <td class="ledger__num" th:text="${#numbers.formatDecimal(b.recoilVertical, 1, 1)}">0.0</td>
+                    <td class="ledger__num" th:text="${#numbers.formatDecimal(b.recoilHorizontal, 1, 1)}">0.0</td>
+                    <td class="ledger__act">
+                        <a class="link-arrow" th:href="@{|/builds/${b.id}|}">VIEW &rarr;</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="empty" th:if="${#lists.isEmpty(builds)}">
+                <span class="empty__mark">— NO MATCHING RECORDS —</span>
+                <span class="empty__hint" th:if="${!firstPage}">End of file. <a th:href="@{|/weapons/${weapon.id}/builds|}">Return to first page</a>.</span>
+                <span class="empty__hint" th:if="${firstPage}">Adjust filters or RESET to widen the search.</span>
+            </div>
+
+            <nav class="pager pager--builds" th:if="${hasNext}">
+                <a class="pager__btn"
+                   th:href="@{|/weapons/${weapon.id}/builds|(after_ts=${nextCursorTs}, after_id=${nextCursorId},
+                              include=${includeSet}, exclude=${excludeSet}, pin=${pinnedIds})}">NEXT PAGE &gt;</a>
+            </nav>
+
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        (function () {
+            const list = document.getElementById('attachmentList');
+            const search = document.getElementById('attachmentQuery');
+            if (!list || !search) return;
+
+            function applyFilter() {
+                const q = (search.value || '').trim().toLowerCase();
+                list.querySelectorAll('.filter__row').forEach(function (row) {
+                    const name = row.dataset.name || '';
+                    row.style.display = (q === '' || name.indexOf(q) !== -1) ? '' : 'none';
+                });
+            }
+
+            search.addEventListener('input', applyFilter);
+            applyFilter();
+
+            list.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    if (!cb.checked) return;
+                    const id = cb.dataset.attachment;
+                    const pair = cb.dataset.pair === 'inc' ? 'exc' : 'inc';
+                    const opp = list.querySelector(
+                        'input[data-attachment="' + id + '"][data-pair="' + pair + '"]');
+                    if (opp && opp.checked) opp.checked = false;
+                });
+            });
+        })();
+    </script>
+</section>
+</body>
+</html>

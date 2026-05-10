@@ -60,15 +60,9 @@ public class AttachmentService {
 
         List<String> idsToFetch = new ArrayList<>();
         uniqueIds.forEach(tarkovId -> {
-            if (dsl.fetchExists(ATTACHMENT, ATTACHMENT.TARKOV_ID.eq(tarkovId))
-                    && dsl.select(ATTACHMENT.UPDATED_AT)
-                    .from(ATTACHMENT)
-                    .where(ATTACHMENT.TARKOV_ID.eq(tarkovId))
-                    .fetchSingleInto(OffsetDateTime.class)
-                    .isAfter(OffsetDateTime.now().minusDays(2))) {
+            if (dsl.fetchExists(ATTACHMENT, ATTACHMENT.TARKOV_ID.eq(tarkovId))) {
                 return;
             }
-            dsl.deleteFrom(ATTACHMENT).where(ATTACHMENT.TARKOV_ID.eq(tarkovId)).execute();
             idsToFetch.add(tarkovId);
         });
 
