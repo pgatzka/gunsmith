@@ -13,7 +13,6 @@ import org.jooq.Record2;
 import org.jooq.Result;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.step.StepExecution;
@@ -45,79 +44,70 @@ public class GenerateProcessor implements ItemProcessor<BuildSettings, BuildResu
 
     private final Set<String> seenHashes = new HashSet<>();
 
-    private int skippedForIllegalWeapon = 0;
-    private int skippedForIllegalAttachment = 0;
-    private int skippedForDuplicate = 0;
-
     @Override
     public void beforeStep(@NonNull StepExecution stepExecution) {
         seenHashes.addAll(loadHashes());
     }
 
     @Override
-    public @Nullable ExitStatus afterStep(StepExecution stepExecution) {
-        log.info("Skipped {} builds due to attachment conflicts", skippedForIllegalAttachment);
-        log.info("Skipped {} builds due to duplication", skippedForDuplicate);
-        log.info("Skipped {} builds due to weapon conflict", skippedForIllegalWeapon);
-
-        return StepExecutionListener.super.afterStep(stepExecution);
-    }
-
-    @Override
     public @Nullable BuildResult process(@NonNull BuildSettings settings) {
-        Map<Integer, AttachmentRecord> usedAttachmentRecords = new HashMap<>();
-        Set<Integer> blockedAttachmentIds = new HashSet<>();
-
-        WeaponRecord weapon = getWeaponByTarkovId(settings.id());
-
-        List<SlotRecord> weaponSlots = getSlotsForWeapon(weapon);
-
-        List<Slot> slots = populateSlots(weaponSlots, weapon, usedAttachmentRecords, blockedAttachmentIds);
-
-        Build build = new Build(weapon.getId(), slots);
-
-        Set<Integer> usedAttachmentIds = build.collectUsedAttachmentIds();
-
-        // Backstop: pre-filter is best-effort (it doesn't catch one-way conflicts where
-        // only the already-chosen attachment lists the candidate, not vice-versa).
-        if (!usedAttachmentIds.isEmpty()) {
-            List<Integer> conflictingAttachmentIds = getConflictingAttachmentIds(usedAttachmentIds);
-
-            if (!Collections.disjoint(usedAttachmentIds, conflictingAttachmentIds)) {
-                skippedForIllegalAttachment++;
-                return null;
-            }
-
-            List<Integer> conflictingWeaponIds = getConflictingWeaponIds(usedAttachmentIds);
-
-            if (conflictingWeaponIds.contains(weapon.getId())) {
-                skippedForIllegalWeapon++;
-                return null;
-            }
-        }
-
-        String buildJson;
         try {
-            buildJson = objectMapper.writeValueAsString(build);
-        } catch (JacksonException e) {
-            throw new IllegalStateException("Failed to serialize build", e);
-        }
+            Map<Integer, AttachmentRecord> usedAttachmentRecords = new HashMap<>();
+            Set<Integer> blockedAttachmentIds = new HashSet<>();
 
-        String buildHash = DigestUtils.md5DigestAsHex(buildJson.getBytes(StandardCharsets.UTF_8));
+            WeaponRecord weapon = getWeaponByTarkovId(settings.id());
 
-        if (!seenHashes.add(buildHash)) {
-            skippedForDuplicate++;
+            List<SlotRecord> weaponSlots = getSlotsForWeapon(weapon);
+
+            List<Slot> slots = populateSlots(weaponSlots, weapon, usedAttachmentRecords, blockedAttachmentIds);
+
+            Build build = new Build(weapon.getId(), slots);
+
+            Set<Integer> usedAttachmentIds = build.collectUsedAttachmentIds();
+
+            // Backstop: pre-filter is best-effort (it doesn't catch one-way conflicts where
+            // only the already-chosen attachment lists the candidate, not vice-versa).
+            if (!usedAttachmentIds.isEmpty()) {
+                List<Integer> conflictingAttachmentIds = getConflictingAttachmentIds(usedAttachmentIds);
+
+                if (!Collections.disjoint(usedAttachmentIds, conflictingAttachmentIds)) {
+                    return null;
+                }
+
+                List<Integer> conflictingWeaponIds = getConflictingWeaponIds(usedAttachmentIds);
+
+                if (conflictingWeaponIds.contains(weapon.getId())) {
+                    return null;
+                }
+            }
+
+            String buildJson;
+            try {
+                buildJson = objectMapper.writeValueAsString(build);
+            } catch (JacksonException e) {
+                throw new IllegalStateException("Failed to serialize build", e);
+            }
+
+            String buildHash = DigestUtils.md5DigestAsHex(buildJson.getBytes(StandardCharsets.UTF_8));
+
+            if (!seenHashes.add(buildHash)) {
+                return null;
+            }
+
+            Collection<AttachmentRecord> usedAttachments = usedAttachmentRecords.values();
+
+            double totalErgonomics = weapon.getErgonomics() + usedAttachments.stream().mapToDouble(AttachmentRecord::getErgonomics).sum();
+            double totalRecoilModifier = usedAttachments.stream().mapToDouble(AttachmentRecord::getRecoilModifier).sum();
+            double totalRecoilHorizontal = weapon.getRecoilHorizontal() * (1 + totalRecoilModifier);
+            double totalRecoilVertical = weapon.getRecoilVertical() * (1 + totalRecoilModifier);
+
+            return new BuildResult(weapon.getId(), totalErgonomics, totalRecoilHorizontal, totalRecoilVertical, buildJson, buildHash);
+        } catch (NoMoreItemsException e) {
+            return null;
+        } catch (Exception e) {
+            log.error("Failed to generate build result", e);
             return null;
         }
-
-        Collection<AttachmentRecord> usedAttachments = usedAttachmentRecords.values();
-
-        double totalErgonomics = weapon.getErgonomics() + usedAttachments.stream().mapToDouble(AttachmentRecord::getErgonomics).sum();
-        double totalRecoilModifier = usedAttachments.stream().mapToDouble(AttachmentRecord::getRecoilModifier).sum();
-        double totalRecoilHorizontal = weapon.getRecoilHorizontal() * (1 + totalRecoilModifier);
-        double totalRecoilVertical = weapon.getRecoilVertical() * (1 + totalRecoilModifier);
-
-        return new BuildResult(weapon.getId(), totalErgonomics, totalRecoilHorizontal, totalRecoilVertical, buildJson, buildHash);
     }
 
     private List<Slot> populateSlots(List<SlotRecord> slots, WeaponRecord weapon, Map<Integer, AttachmentRecord> usedAttachmentRecords, Set<Integer> blockedAttachmentIds) {
@@ -246,10 +236,16 @@ public class GenerateProcessor implements ItemProcessor<BuildSettings, BuildResu
         });
     }
 
+    public static class NoMoreItemsException extends IllegalArgumentException {
+        public NoMoreItemsException() {
+            super("List must be non-empty when required=true");
+        }
+    }
+
     public static <T> T randomElement(List<T> list, boolean required) {
         if (list == null || list.isEmpty()) {
             if (required) {
-                throw new IllegalArgumentException("List must be non-empty when required=true");
+                throw new NoMoreItemsException();
             }
             return null;
         }
